@@ -1,0 +1,15 @@
+{
+  "last_updated": "2026-11-20T19:41:28.747179+00:00",
+  "last_updated_local": "2026-11-21T01:11:28.747195+05:30",
+  "last_trained": "2026-11-20T19:27:56.833819+00:00",
+  "last_trained_local": "2026-11-21T00:57:56.833819+05:30",
+  "total_records": 1047,
+  "available_count": 620,
+  "unavailable_count": 427,
+  "model_metrics": {
+    "mse": 0.12856907083286992,
+    "r2": 0.9878467714090303,
+    "rows": 1047
+  },
+  "model_path": "models/laptop_ranker.pkl"
+}

@@ -1,0 +1,3581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaptopWise · AI Laptop Recommendation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f121a;
+            --surface: #1a1f2e;
+            --surface-hover: #222a3d;
+            --border: rgba(255, 255, 255, 0.10);
+            --border-strong: rgba(255, 255, 255, 0.18);
+            --text: #e8ecf3;
+            --text-muted: #9aa5b8;
+            --text-faint: #6b768a;
+            --accent-1: #6366f1;
+            --accent-2: #6366f1;
+            --accent-3: #6366f1;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08);
+            --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --transition: 0.15s ease;
+
+            /* Toggleable surfaces (dark theme defaults) */
+            --input-bg: #141a2a;
+            --deep-bg: #141a2a;
+            --deep-bg-2: #141a2a;
+            --deep-bg-3: #1a1f2e;
+            --overlay: rgba(15, 18, 26, 0.85);
+            --overlay-solid: rgba(15, 18, 26, 0.95);
+            --option-bg: #1e2538;
+            --thumb-bg: #1e2538;
+            --h1-from: #fff;
+            --prose: #c6cdda;
+            --prose-soft: #c9d2e1;
+            --shimmer-hi: rgba(255, 255, 255, 0.08);
+            --shimmer-lo: rgba(255, 255, 255, 0.03);
+            --border-soft-white: rgba(255, 255, 255, 0.15);
+        }
+
+        :root[data-theme="light"] {
+            --bg: #f8f9fb;
+            --surface: #ffffff;
+            --surface-hover: #f1f5f9;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --text: #0f172a;
+            --text-muted: #475569;
+            --text-faint: #94a3b8;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.06);
+            --input-bg: #ffffff;
+            --deep-bg: #ffffff;
+            --deep-bg-2: #f8fafc;
+            --deep-bg-3: #f1f5f9;
+            --overlay: rgba(15, 23, 42, 0.45);
+            --overlay-solid: rgba(255, 255, 255, 0.98);
+            --option-bg: #ffffff;
+            --thumb-bg: #f1f5f9;
+            --h1-from: #0f172a;
+            --prose: #475569;
+            --prose-soft: #334155;
+            --shimmer-hi: rgba(148, 163, 184, 0.20);
+            --shimmer-lo: rgba(148, 163, 184, 0.08);
+            --border-soft-white: #e2e8f0;
+        }
+
+        :root[data-theme="light"] body {
+            background-image: none;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            background-color: var(--bg);
+            background-image: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::selection {
+            background: rgba(139, 92, 246, 0.4);
+            color: #fff;
+        }
+
+        a {
+            color: var(--accent-3);
+            text-decoration: none;
+        }
+
+        .wrap {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 24px 64px;
+        }
+
+        /* ---------- Header ---------- */
+        .theme-toggle {
+            position: fixed;
+            top: 16px;
+            right: 18px;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 13px;
+            border-radius: 999px;
+            border: 1px solid var(--border-strong);
+            background: var(--surface);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color var(--transition), color var(--transition), background var(--transition);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent-1);
+            color: var(--text);
+        }
+
+        /* Theme switch styled as a dot + direction arrow: dark ● → ○ light
+           while in dark mode (<0-->), flipped to ● ← ○ in light mode (<--0>). */
+        .theme-toggle .th-dot,
+        .theme-toggle .th-arrow {
+            flex-shrink: 0;
+            transition: opacity var(--transition), box-shadow var(--transition), transform var(--transition);
+        }
+
+        .theme-toggle .th-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .theme-toggle .th-dot-dark {
+            background: radial-gradient(circle at 32% 32%, #3a4260, #0d1226 72%);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.45);
+            opacity: 0.45;
+        }
+
+        .theme-toggle .th-dot-light {
+            background: radial-gradient(circle at 32% 32%, #ffffff, #d7dfee 78%);
+            border: 1px solid rgba(15, 23, 42, 0.22);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.65);
+            opacity: 0.45;
+        }
+
+        .theme-toggle .th-arrow {
+            width: 14px;
+            height: 14px;
+            color: var(--text-muted);
+        }
+
+        /* Dark theme (default): dark dot active, arrow points right → light */
+        .theme-toggle .th-dot-dark {
+            opacity: 1;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Light theme: light dot active, arrow points left ← dark */
+        :root[data-theme="light"] .theme-toggle .th-dot-dark {
+            opacity: 0.45;
+            box-shadow: none;
+        }
+
+        :root[data-theme="light"] .theme-toggle .th-dot-light {
+            opacity: 1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+        }
+
+        :root[data-theme="light"] .theme-toggle .th-arrow {
+            transform: rotate(180deg);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .updated-badge {
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--text-faint);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .updated-badge-short { display: none; }
+        @media (max-width: 620px) {
+            .updated-badge-full { display: none; }
+            .updated-badge-short { display: inline; }
+            .topbar { justify-content: center; }
+        }
+
+        /* Unified control row - GPU + availability switch */
+        .control-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            align-items: end;
+            margin-top: 12px;
+        }
+        @media (max-width: 620px) {
+            .control-row { grid-template-columns: 1fr; }
+        }
+        .switch-field {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 44px;
+            padding: 0 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            user-select: none;
+        }
+        .switch-field:hover { border-color: var(--border-strong); }
+        .switch-field:focus-within {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
+        }
+        .switch-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .switch-track {
+            width: 36px;
+            height: 22px;
+            background: var(--border-strong);
+            border-radius: 999px;
+            position: relative;
+            flex-shrink: 0;
+            transition: background var(--transition);
+        }
+        .switch-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: transform var(--transition);
+        }
+        .switch-input:checked + .switch-track {
+            background: var(--accent-1);
+        }
+        .switch-input:checked + .switch-track .switch-thumb {
+            transform: translateX(14px);
+        }
+        .switch-label {
+            font-size: 0.86rem;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1.2;
+        }
+        .switch-sub { color: var(--text-faint); font-weight: 400; font-size: 0.78rem; }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 26px 0 10px;
+            animation: fade-up 0.6s ease both;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border-strong);
+            background: var(--surface);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.8);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .hero h1 {
+            font-size: clamp(1.7rem, 4.5vw, 2.35rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            color: var(--text);
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            max-width: 580px;
+            margin: 8px auto 0;
+            font-size: 0.95rem;
+        }
+
+        /* ---------- Stats bar ---------- */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 880px;
+            margin: 16px auto 0;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            text-align: left;
+            transition: border-color var(--transition);
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-strong);
+        }
+
+        .stat-card .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-faint);
+            font-weight: 600;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-top: 2px;
+            color: var(--text);
+        }
+
+        .stat-card.skeleton .stat-value {
+            height: 22px;
+            width: 70%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--surface) 25%, var(--surface-hover) 50%, var(--surface) 75%);
+            background-size: 200% 100%;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 1.4s linear infinite;
+        }
+
+        /* ---------- Layout ---------- */
+        .layout {
+            display: grid;
+            grid-template-columns: 430px 1fr;
+            gap: 16px;
+            align-items: stretch;
+            margin-top: 16px;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .title-inline {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-inline svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-3);
+            flex-shrink: 0;
+        }
+
+        .form-panel .panel-title svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-3);
+            flex-shrink: 0;
+        }
+
+        /* ---------- Form ---------- */
+        .form-section {
+            margin-bottom: 14px;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-faint);
+            margin-bottom: 10px;
+        }
+
+        .section-heading .step {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 11px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 11px;
+        }
+
+        .grid-2 .form-group,
+        .grid-3 .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.86rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        label .opt {
+            color: var(--text-faint);
+            font-weight: 500;
+        }
+
+        .req {
+            color: var(--error);
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 9px 12px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text);
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            appearance: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 74px;
+        }
+
+        input:hover,
+        select:hover,
+        textarea:hover {
+            border-color: var(--border-strong);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--text-faint);
+        }
+
+        select {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239aa5b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 38px;
+        }
+
+        select option {
+            background: var(--option-bg);
+            color: var(--text);
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-wrap .prefix {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 600;
+            color: var(--text-faint);
+            pointer-events: none;
+        }
+
+        .input-wrap .prefix+input,
+        .input-wrap .prefix+select {
+            padding-left: 32px;
+        }
+
+        .hint {
+            font-size: 0.78rem;
+            color: var(--text-faint);
+            margin-top: 6px;
+        }
+
+        #lock-hint {
+            grid-column: 1 / -1;
+        }
+
+        #lock-hint .hint {
+            margin-top: 2px;
+        }
+
+        /* Proactive availability feedback */
+        .availability {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            background: rgba(34, 211, 238, 0.07);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .availability svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: var(--accent-3);
+        }
+
+        .availability.warn {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: rgba(251, 191, 36, 0.3);
+            color: #fde68a;
+        }
+
+        :root[data-theme="light"] .availability.warn {
+            color: #92400e;
+        }
+
+        .availability.warn svg {
+            color: var(--warning);
+        }
+
+        /* Animated loading skeleton */
+        .loading {
+            padding: 8px 0;
+        }
+
+        .loading-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: var(--accent-3);
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .loading-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text);
+        }
+
+        .loading-dots i {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            margin: 0 2px;
+            border-radius: 50%;
+            background: var(--accent-3);
+            animation: dot-bounce 1.2s ease-in-out infinite;
+        }
+
+        .loading-dots i:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .loading-dots i:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .loading-sub {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 4px 0 18px;
+        }
+
+        /* Collapsible raw progress log under the loading view — verbose agent
+           messages live here instead of the main progress line. */
+        .loading-details {
+            margin: 0 0 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--deep-bg-2);
+            overflow: hidden;
+        }
+
+        .loading-details summary {
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            user-select: none;
+            transition: color var(--transition);
+        }
+
+        .loading-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .loading-details summary:hover {
+            color: var(--text);
+        }
+
+        .loading-details summary::after {
+            content: '';
+            width: 0;
+            height: 0;
+            margin-left: auto;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid currentColor;
+            transition: transform var(--transition);
+        }
+
+        .loading-details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .loading-log {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 12px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .loading-log-line {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            border-left: 2px solid var(--border-strong);
+            padding-left: 10px;
+        }
+
+        .loading-log-line:first-child {
+            margin-top: 4px;
+        }
+
+        .progress-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 12px 0 16px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--deep-bg-2);
+        }
+
+        .progress-steps-overview {
+            padding: 10px 12px;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-faint);
+            opacity: 0.55;
+        }
+
+        .progress-step.done {
+            color: var(--success);
+            opacity: 1;
+        }
+
+        .progress-step.active {
+            color: var(--text);
+            opacity: 1;
+            font-weight: 600;
+        }
+
+        .step-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-step.done .step-icon {
+            color: var(--success);
+        }
+
+        .progress-step.active .step-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--border-soft-white);
+            border-top-color: var(--accent-3);
+            animation: spin 0.7s linear infinite;
+        }
+
+        .step-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-faint);
+        }
+
+        .loading-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .sk-card {
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent-1);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            background: var(--surface);
+        }
+
+        .sk-table {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: var(--deep-bg-2);
+        }
+
+        .sk-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sk-row:last-child {
+            border-bottom: none;
+        }
+
+        .sk {
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--shimmer-lo) 25%, var(--shimmer-hi) 50%, var(--shimmer-lo) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.3s linear infinite;
+        }
+
+        .sk-line {
+            height: 12px;
+            margin-bottom: 10px;
+        }
+
+        .sk-line:last-child {
+            margin-bottom: 0;
+        }
+
+        .sk-cell {
+            height: 12px;
+        }
+
+        .w60 {
+            width: 60%;
+        }
+
+        .w90 {
+            width: 90%;
+        }
+
+        .w75 {
+            width: 75%;
+        }
+
+        .w40 {
+            width: 40%;
+        }
+
+        .field-error {
+            font-size: 0.78rem;
+            color: var(--error);
+            margin-top: 6px;
+            display: none;
+        }
+
+        .form-group.invalid .field-error {
+            display: block;
+        }
+
+        .form-group.invalid input,
+        .form-group.invalid select {
+            border-color: var(--error);
+            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+        }
+
+        /* Budget chips */
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .chip {
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .chip:hover {
+            border-color: var(--accent-1);
+            color: var(--text);
+            transform: translateY(-1px);
+        }
+
+        .chip.active {
+            background: var(--accent-1);
+            border-color: transparent;
+            color: #fff;
+        }
+        .chip-sm { font-size: 0.72rem; padding: 4px 8px; }
+
+        /* Collapsible optional section */
+        .toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 9px 12px;
+            background: var(--deep-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color var(--transition), color var(--transition);
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--border-strong);
+            color: var(--text);
+        }
+
+        .toggle-btn .chevron {
+            margin-left: auto;
+            transition: transform var(--transition);
+        }
+
+        .toggle-btn.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .optional-body {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .optional-body.open {
+            display: block;
+            animation: fade-in 0.25s ease both;
+        }
+
+        /* Submit button */
+        .submit-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 18px;
+            margin-top: 14px;
+            font-family: inherit;
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+            transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+        }
+
+        .submit-btn .arrow {
+            transition: transform var(--transition);
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+            box-shadow: 0 12px 32px rgba(139, 92, 246, 0.45);
+        }
+
+        .submit-btn:hover:not(:disabled) .arrow {
+            transform: translateX(3px);
+        }
+
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.75;
+            cursor: not-allowed;
+        }
+
+        .spinner-btn {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .submit-btn.loading .spinner-btn {
+            display: block;
+        }
+
+        .example-btn {
+            display: block;
+            margin: 8px auto 0;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-faint);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color var(--transition);
+        }
+
+        .example-btn:hover {
+            color: var(--accent-3);
+        }
+
+        /* ---------- Results panel (full width, below form + overview) ---------- */
+        .results-panel {
+            grid-column: 1 / -1;
+            min-height: 0;
+            position: relative;
+            overflow: visible;
+        }
+
+        .results-panel .panel-title {
+            justify-content: space-between;
+        }
+
+        .results-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .source-badge {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .source-badge.ai {
+            color: var(--success);
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .source-badge.local {
+            color: var(--accent-3);
+            background: rgba(34, 211, 238, 0.08);
+            border: 1px solid rgba(34, 211, 238, 0.25);
+        }
+
+        .source-badge .src-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .copy-btn:hover {
+            color: var(--text);
+            border-color: var(--border-strong);
+        }
+
+        .copy-btn.copied {
+            color: var(--success);
+            border-color: rgba(52, 211, 153, 0.4);
+        }
+
+        .copy-btn.failed {
+            color: var(--error);
+            border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        /* ---------- Overview panel (picked laptops) ---------- */
+        .overview-panel {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        #overview-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .overview-panel .panel-title {
+            justify-content: space-between;
+        }
+
+        .overview-count {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-faint);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 3px 9px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .overview-list {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            max-height: 58vh;
+            min-height: 120px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .overview-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .overview-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+
+        .overview-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-faint);
+            padding: 30px 12px;
+            min-height: 300px;
+        }
+
+        .overview-state .state-icon {
+            width: 42px;
+            height: 42px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .overview-state h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .overview-state p {
+            font-size: 0.82rem;
+            max-width: 260px;
+        }
+
+        .loader-ring.small {
+            width: 28px;
+            height: 28px;
+            border-width: 3px;
+            margin-bottom: 12px;
+        }
+
+        .pick-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            background: var(--deep-bg);
+        }
+
+        .pick-card.top {
+            border-left: 3px solid var(--accent-2);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.14), var(--deep-bg));
+        }
+
+        .pick-thumb-wrap {
+            width: 72px;
+            height: 72px;
+            flex-shrink: 0;
+            margin: 2px 0 0;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: var(--thumb-bg);
+            border: 1px solid var(--border);
+        }
+
+        .pick-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            cursor: zoom-in;
+        }
+
+        .thumb-ph {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-faint);
+        }
+
+        .thumb-ph svg {
+            width: 26px;
+            height: 26px;
+            opacity: 0.55;
+        }
+
+        .rec-title-cell .thumb-ph {
+            width: 64px;
+            height: 64px;
+            flex-shrink: 0;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+
+        .rec-head .thumb-ph {
+            width: 52px;
+            height: 52px;
+            flex-shrink: 0;
+        }
+
+        /* ---------- Image preview lightbox ---------- */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: var(--overlay);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            cursor: zoom-out;
+            padding: 32px;
+        }
+
+        .lightbox.open {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-width: 90vw;
+            max-height: 88vh;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+            cursor: default;
+            background: #fff;
+            padding: 6px;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 18px;
+            right: 22px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--overlay-solid);
+            color: var(--text);
+            font-size: 1.15rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color var(--transition), border-color var(--transition);
+        }
+
+        .lightbox-close:hover {
+            color: var(--accent-3);
+            border-color: rgba(34, 211, 238, 0.5);
+        }
+
+        .pick-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .pick-title {
+            font-weight: 700;
+            font-size: 0.8rem;
+            line-height: 1.35;
+            margin: 2px 0 2px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            color: var(--text);
+        }
+
+        a.pick-title {
+            text-decoration: none;
+        }
+
+        a.pick-title:hover {
+            color: var(--accent-3);
+            text-decoration: underline;
+        }
+
+        .pick-brand {
+            font-weight: 600;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-faint);
+            margin-bottom: 4px;
+        }
+
+        .pick-actions {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .pick-link {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-3);
+        }
+
+        .pick-link:hover {
+            text-decoration: underline;
+        }
+
+        .pick-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pick-rank {
+            font-size: 0.64rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-3);
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid rgba(34, 211, 238, 0.25);
+            padding: 2px 7px;
+            border-radius: 999px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .pick-price {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--accent-3);
+            white-space: nowrap;
+        }
+
+        .pick-specs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .spec-chip {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            background: var(--surface);
+            white-space: nowrap;
+        }
+
+        .pick-colors {
+            font-size: 0.7rem;
+            color: var(--text-faint);
+            margin-top: 6px;
+        }
+
+        .pick-colors strong {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .unavailable-tag {
+            display:inline-flex;align-items:center;gap:4px;font-size:0.68rem;font-weight:600;
+            color:var(--warning);background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.25);
+            padding:3px 8px;border-radius:999px;white-space:nowrap;
+        }
+        .pick-card.unavailable {opacity:0.92; border-style:dashed; border-left:3px dashed var(--warning)}
+        .pick-card {border-left:3px solid transparent}
+        .pick-card.top {border-left:3px solid var(--accent-1); background:var(--surface)}
+        .gpu-chip {background:rgba(99,102,241,0.10);border-color:rgba(99,102,241,0.20);color:var(--accent-1)}
+
+        .pick-note {
+            font-size: 0.8rem;
+            color: var(--text-faint);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        /* Empty / loading / error states */
+        .state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-faint);
+        }
+
+        .state .state-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 18px;
+            opacity: 0.6;
+        }
+
+        .state h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .state p {
+            font-size: 0.9rem;
+            max-width: 380px;
+        }
+
+        .loader-ring {
+            width: 46px;
+            height: 46px;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: var(--accent-3);
+            border-right-color: var(--accent-2);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 18px;
+        }
+
+        .state.error h3 {
+            color: var(--error);
+        }
+
+        /* Notice (below the analysis) */
+        .notice {
+            display: flex;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(148, 163, 184, 0.07);
+            border: 1px solid var(--border);
+            margin-top: 18px;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        .notice>svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: var(--warning);
+        }
+
+        .notice-body {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .notice-title {
+            display: block;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .tech-details summary {
+            cursor: pointer;
+            color: var(--text-faint);
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: color var(--transition);
+        }
+
+        .tech-details summary:hover {
+            color: var(--text-muted);
+        }
+
+        .tech-details pre {
+            margin-top: 10px;
+            padding: 12px;
+            max-height: 200px;
+            overflow: auto;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-faint);
+            background: var(--deep-bg-3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        /* ---------- Rendered markdown ---------- */
+        .recommendation {
+            line-height: 1.7;
+            font-size: 0.94rem;
+        }
+
+        .recommendation h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 6px 0 14px;
+            letter-spacing: -0.01em;
+            background: linear-gradient(120deg, var(--text), var(--accent-3));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .recommendation h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 22px 0 10px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recommendation h3::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            border-radius: 2px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+            flex-shrink: 0;
+        }
+
+        /* Each laptop pick renders as a card */
+        .recommendation h4 {
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin: 20px 0 10px;
+            padding: 14px 16px;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent-1);
+            border-radius: var(--radius-sm);
+        }
+
+        .recommendation p {
+            margin: 0 0 12px;
+            color: var(--prose);
+        }
+
+        .recommendation > p:first-of-type {
+            font-size: 1rem;
+            color: var(--prose-soft);
+            padding: 14px 16px;
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: var(--radius-sm);
+        }
+
+        .recommendation strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .recommendation ul {
+            margin: 0 0 14px;
+            padding-left: 20px;
+            list-style: none;
+        }
+
+        .recommendation ul li {
+            position: relative;
+            padding-left: 6px;
+            margin-bottom: 6px;
+            color: var(--prose);
+        }
+
+        .recommendation ul li::before {
+            content: '';
+            position: absolute;
+            left: -14px;
+            top: 9px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+        }
+
+        .recommendation code {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 0.85em;
+            background: var(--deep-bg-3);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 2px 6px;
+            color: var(--accent-3);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 16px 0 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--deep-bg-2);
+        }
+
+        .recommendation table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.87rem;
+            table-layout: auto;
+        }
+        @media (max-width: 620px) {
+            .recommendation table { min-width: 640px; }
+        }
+
+        .recommendation th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-faint);
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .recommendation td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--prose);
+            word-break: normal;
+            overflow-wrap: break-word;
+            vertical-align: top;
+            white-space: nowrap;
+        }
+        .recommendation td:first-child {
+            white-space: normal;
+            min-width: 180px;
+            word-break: break-word;
+        }
+
+        .recommendation tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .recommendation tbody tr:hover {
+            background: rgba(139, 92, 246, 0.07);
+        }
+
+        .recommendation tr:last-child td {
+            border-bottom: none;
+        }
+
+        .rec-thumb {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--thumb-bg);
+            margin-right: 12px;
+            vertical-align: middle;
+            flex-shrink: 0;
+            cursor: zoom-in;
+        }
+
+        .rec-title-cell {
+            display: flex;
+            align-items: center;
+        }
+
+        .rec-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rec-head-thumb {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--thumb-bg);
+            flex-shrink: 0;
+            cursor: zoom-in;
+        }
+
+        .rec-title-link {
+            font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .rec-title-link:hover {
+            color: var(--accent-3);
+            text-decoration: underline;
+        }
+
+        .recommendation hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 20px 0;
+        }
+
+        /* ---------- Footer ---------- */
+        footer {
+            text-align: center;
+            color: var(--text-faint);
+            font-size: 0.82rem;
+            padding-top: 48px;
+        }
+
+        footer span {
+            color: var(--accent-3);
+        }
+
+        /* ---------- Animations ---------- */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        @keyframes fade-up {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes shimmer {
+            from {
+                background-position: 200% 0;
+            }
+            to {
+                background-position: -200% 0;
+            }
+        }
+
+        @keyframes dot-bounce {
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.35;
+            }
+            30% {
+                transform: translateY(-4px);
+                opacity: 1;
+            }
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 620px) {
+            html {
+                -webkit-text-size-adjust: 100%;
+            }
+
+            body {
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .hero {
+                padding-top: 32px;
+            }
+
+            .hero h1 {
+                font-size: clamp(1.7rem, 7vw, 2.2rem);
+            }
+
+            .hero p {
+                font-size: 0.95rem;
+            }
+
+            .wrap {
+                padding: 0 14px 96px;
+            }
+
+            .panel {
+                padding: 18px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 26px;
+            }
+
+            .stat-card {
+                padding: 12px 14px;
+            }
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .chips {
+                gap: 8px;
+            }
+
+            .chip {
+                flex: 1 1 auto;
+                text-align: center;
+                padding: 10px 8px;
+            }
+
+            /* Prevent iOS zoom-on-focus + comfortable touch targets */
+            input,
+            select,
+            textarea {
+                font-size: 16px;
+                padding: 12px 13px;
+            }
+
+            .submit-btn {
+                font-size: 1.02rem;
+                padding: 15px 18px;
+                /* Keep the action always reachable while scrolling the form */
+                position: sticky;
+                bottom: 14px;
+                z-index: 20;
+                box-shadow: 0 10px 32px rgba(99, 102, 241, 0.55);
+            }
+
+            .toggle-btn {
+                padding: 13px 14px;
+            }
+
+            .overview-list {
+                max-height: 50vh;
+            }
+
+            .source-badge {
+                font-size: 0.7rem;
+                padding: 4px 9px;
+            }
+
+            .recommendation h4 {
+                font-size: 0.95rem;
+            }
+
+            .recommendation .table-wrap {
+                margin-left: -6px;
+                margin-right: -6px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-value {
+                font-size: 1.15rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light or dark mode">
+                <span class="th-dot th-dot-dark" aria-hidden="true"></span>
+                <svg class="th-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                <span class="th-dot th-dot-light" aria-hidden="true"></span>
+                <span id="theme-toggle-label" class="sr-only">Dark</span>
+            </button>
+    <div class="wrap">
+        <header class="hero">
+            <div class="topbar">
+                <div id="last-updated-badge" class="updated-badge" title="Dataset refresh time">
+                    <span class="updated-badge-full">Last updated: loading…</span>
+                    <span class="updated-badge-short">Updated: loading…</span>
+                </div>
+            </div>
+            <!-- <div class="badge"><span class="dot"></span> Powered by CrewAI</div> -->
+            <h1>Find Your Perfect Laptop</h1>
+            <p>Tell us about your domain, budget and preferences. Our AI advisors will match you with the best laptops from a curated real-world catalog.</p>
+
+            <div class="stats" id="stats-bar" aria-label="Dataset statistics">
+                <div class="stat-card skeleton">
+                    <div class="stat-label">Laptops</div>
+                    <div class="stat-value"></div>
+                </div>
+                <div class="stat-card skeleton">
+                    <div class="stat-label">Avg. Price</div>
+                    <div class="stat-value"></div>
+                </div>
+                <div class="stat-card skeleton">
+                    <div class="stat-label">Avg. Rating</div>
+                    <div class="stat-value"></div>
+                </div>
+                <div class="stat-card skeleton">
+                    <div class="stat-label">Brands</div>
+                    <div class="stat-value"></div>
+                </div>
+            </div>
+        </header>
+
+        <main class="layout">
+            <!-- ================= Form ================= -->
+            <section class="panel form-panel" aria-label="Recommendation form">
+                <h2 class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.17L4 17.17V4z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
+                    Build your profile
+                </h2>
+
+                <form id="recommendation-form" novalidate>
+                    <!-- Step 1: AI Engine -->
+                    <div class="form-section">
+                        <div class="section-heading"><span class="step">1</span> AI Engine</div>
+                        <div class="form-group">
+                            <label for="provider">AI Provider</label>
+                            <div class="input-wrap">
+                                <select id="provider" name="provider" required>
+                                    <option value="local">Local (no API key)</option>
+                                    <option value="gemini">Gemini</option>
+                                    <option value="nvidia">NVIDIA</option>
+                                    <option value="openrouter">OpenRouter</option>
+                                    <option value="openai">OpenAI</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" id="or-model-group" style="display: none;">
+                            <label for="or-model">OpenRouter Model</label>
+                            <div class="input-wrap">
+                                <select id="or-model" name="or_model">
+                                    <option value="google/gemma-4-31b-it:free">Google Gemma 4 31B IT (free)</option>
+                                    <option value="nvidia/nemotron-3.5-lightning:free">NVIDIA Nemotron 3.5 Lightning (free)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Core preferences (always visible) -->
+                    <div class="form-section">
+                        <div class="section-heading"><span class="step">2</span> Core Preferences</div>
+
+                        <div class="grid-2">
+                            <div class="form-group" id="major-group">
+                                <label for="major">Domain / Field of Study <span class="req">*</span></label>
+                                <input type="text" id="major" name="major" list="domain-list" required
+                                    placeholder="Type or choose, e.g. Computer Science"
+                                    autocomplete="off">
+                                <datalist id="domain-list">
+                                    <option value="Computer Science"></option>
+                                    <option value="Software Engineering"></option>
+                                    <option value="Data Science"></option>
+                                    <option value="Artificial Intelligence"></option>
+                                    <option value="Cybersecurity"></option>
+                                    <option value="Graphic Design"></option>
+                                    <option value="Animation & VFX"></option>
+                                    <option value="Architecture"></option>
+                                    <option value="Business Administration (MBA)"></option>
+                                    <option value="Finance"></option>
+                                    <option value="Marketing"></option>
+                                    <option value="Mechanical Engineering"></option>
+                                    <option value="Electrical Engineering"></option>
+                                    <option value="Civil Engineering"></option>
+                                    <option value="Medicine"></option>
+                                    <option value="Law"></option>
+                                    <option value="Psychology"></option>
+                                    <option value="Education"></option>
+                                    <option value="Media & Communications"></option>
+                                </datalist>
+                                <p class="field-error">Please enter your domain or field of study.</p>
+                                <div class="chips" id="major-chips" role="group" aria-label="Quick domain suggestions" style="margin-top:6px">
+                                    <button type="button" class="chip chip-sm" data-value="Computer Science">CS</button>
+                                    <button type="button" class="chip chip-sm" data-value="Data Science">Data Sci</button>
+                                    <button type="button" class="chip chip-sm" data-value="Business Administration (MBA)">MBA</button>
+                                    <button type="button" class="chip chip-sm" data-value="Graphic Design">Design</button>
+                                    <button type="button" class="chip chip-sm" data-value="Mechanical Engineering">Mech</button>
+                                    <button type="button" class="chip chip-sm" data-value="Medicine">Medicine</button>
+                                </div>
+                            </div>
+                            <div class="form-group" id="budget-group">
+                                <label for="budget">Budget <span class="req">*</span> <span class="opt">(₹)</span></label>
+                                <div class="input-wrap">
+                                    <span class="prefix">₹</span>
+                                    <input type="number" id="budget" name="budget" min="10000" step="500" required
+                                        placeholder="e.g. 80000">
+                                </div>
+                                <p class="field-error">Please enter a budget of at least ₹10,000.</p>
+                            </div>
+                        </div>
+
+                        <div class="chips" id="budget-chips" role="group" aria-label="Budget suggestions">
+                            <button type="button" class="chip" data-value="40000">₹40k</button>
+                            <button type="button" class="chip" data-value="60000">₹60k</button>
+                            <button type="button" class="chip" data-value="80000">₹80k</button>
+                            <button type="button" class="chip" data-value="100000">₹1L</button>
+                            <button type="button" class="chip" data-value="150000">₹1.5L</button>
+                            <button type="button" class="chip" data-value="200000">₹2L</button>
+                            <button type="button" class="chip" data-value="300000">₹3L</button>
+                            <button type="button" class="chip" data-value="500000">₹5L</button>
+                        </div>
+                        <p class="hint" id="budget-hint" style="font-size:0.72rem;color:var(--text-faint);margin-top:4px">Dataset top: ~₹12.2L</p>
+
+                        <div class="grid-3" style="margin-top: 16px;">
+                            <div class="form-group">
+                                <label for="ram">Min RAM <span class="opt">(GB)</span></label>
+                                <input type="number" id="ram" name="ram" list="ram-list" min="0" step="2"
+                                    placeholder="Any">
+                                <datalist id="ram-list">
+                                    <option value="8"></option>
+                                    <option value="12"></option>
+                                    <option value="16"></option>
+                                    <option value="32"></option>
+                                    <option value="64"></option>
+                                </datalist>
+                            </div>
+                            <div class="form-group">
+                                <label for="brand">Brand</label>
+                                <div class="input-wrap">
+                                    <select id="brand" name="brand">
+                                        <option value="">Any</option>
+                                        <option value="Apple">Apple</option>
+                                        <option value="HP">HP</option>
+                                        <option value="Dell">Dell</option>
+                                        <option value="Lenovo">Lenovo</option>
+                                        <option value="ASUS">ASUS</option>
+                                        <option value="Acer">Acer</option>
+                                        <option value="MSI">MSI</option>
+                                        <option value="Samsung">Samsung</option>
+                                        <option value="Xiaomi">Xiaomi</option>
+                                        <option value="Primebook">Primebook</option>
+                                        <option value="Alienware">Alienware</option>
+                                        <option value="Thomson">Thomson</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="os_name">Operating System</label>
+                                <div class="input-wrap">
+                                    <select id="os_name" name="os_name">
+                                        <option value="">Any</option>
+                                        <option value="Windows">Windows</option>
+                                        <option value="MacOS">macOS</option>
+                                        <option value="Linux">Linux</option>
+                                        <option value="Chrome OS">Chrome OS</option>
+                                        <option value="Android">Android</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" id="lock-hint" style="display: none;">
+                                <p class="hint" id="lock-hint-text" role="status" aria-live="polite"></p>
+                            </div>
+                        </div>
+
+                        <div class="availability" id="availability-hint" style="display: none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            <span id="availability-text"></span>
+                        </div>
+                    </div>
+
+                    <!-- GPU & availability -->
+                    <div class="control-row">
+                        <div class="form-group">
+                            <label for="gpu">GPU</label>
+                            <div class="input-wrap">
+                                <select id="gpu" name="gpu">
+                                    <option value="">Any</option>
+                                    <option value="dedicated">Dedicated GPU (RTX/GTX)</option>
+                                    <option value="integrated">Integrated only</option>
+                                </select>
+                            </div>
+                            <p class="hint">Dedicated = RTX/GTX/Radeon RX for gaming/ML.</p>
+                        </div>
+                        <label class="switch-field" for="include_unavailable" aria-label="Show currently unavailable laptops">
+                            <input type="checkbox" id="include_unavailable" name="include_unavailable" class="switch-input">
+                            <span class="switch-track"><span class="switch-thumb"></span></span>
+                            <span class="switch-label">Show unavailable <span class="switch-sub">currently</span></span>
+                        </label>
+                    </div>
+
+                    <!-- Step 3: More options (collapsible) -->
+                    <div class="form-section">
+                        <button type="button" class="toggle-btn" id="optional-toggle" aria-expanded="false" aria-controls="optional-body">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                            More options
+                            <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="optional-body" id="optional-body">
+                            <div class="form-group">
+                                <label for="details">Specific Needs <span class="opt">(optional)</span></label>
+                                <textarea id="details" name="details"
+                                    placeholder="e.g. Need to run heavy design software, long battery life for lectures, lightweight for travel..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <span class="spinner-btn"></span>
+                        <span id="submit-label">Get My Recommendation</span>
+                        <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </button>
+                </form>
+
+                <button type="button" class="example-btn" id="example-btn">Try an example profile</button>
+            </section>
+
+            <!-- ================= Overview (picked laptops) ================= -->
+            <section class="panel overview-panel" aria-label="Picked laptops overview">
+                <h2 class="panel-title">
+                    <span class="title-inline">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+                        Picked laptops
+                    </span>
+                    <span class="overview-count" id="overview-count" style="display: none;"></span>
+                </h2>
+
+                <div id="overview-content">
+                    <div class="overview-state" id="overview-empty">
+                        <svg class="state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+                        <h3>No picks yet</h3>
+                        <p>Run a recommendation and the laptops chosen for you will appear here at a glance.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= Recommendation (full width) ================= -->
+            <section class="panel results-panel" aria-label="Recommendation results">
+                <h2 class="panel-title">
+                    <span class="title-inline">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6-6 6 6 6"/><path d="m15 6 6 6-6 6"/></svg>
+                        Recommendation
+                    </span>
+                    <span class="results-actions">
+                        <span class="source-badge" id="source-badge"><span class="src-dot"></span><span id="source-badge-label"></span></span>
+                        <button type="button" class="copy-btn" id="copy-btn" style="display: none;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                            Copy
+                        </button>
+                    </span>
+                </h2>
+
+                <div id="results">
+                    <div class="state" id="empty-state">
+                        <svg class="state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/><path d="M7 19h10"/></svg>
+                        <h3>Ready when you are</h3>
+                        <p>Fill in your profile and click “Get My Recommendation” to see your personalized laptop picks.</p>
+                    </div>
+                </div>
+
+                <div id="notice-area" style="display: none;">
+                    <div class="notice">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                        <div class="notice-body">
+                            <span class="notice-title" id="notice-title"></span>
+                            <span id="warning-message"></span>
+                            <details class="tech-details" id="tech-details" style="display: none;">
+                                <summary>View technical details</summary>
+                                <pre id="error-details"></pre>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            Powered by <span>CrewAI</span> + FastAPI · Recommendations from a curated laptop catalog
+        </footer>
+    </div>
+
+    <!-- Image preview lightbox -->
+    <div id="lightbox" class="lightbox" aria-hidden="true">
+        <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Close preview">✕</button>
+        <img id="lightbox-img" src="" alt="Product image preview" />
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            /* ---------- Elements ---------- */
+            const providerSelect = document.getElementById('provider');
+            const orModelGroup = document.getElementById('or-model-group');
+            const orModelSelect = document.getElementById('or-model');
+            const form = document.getElementById('recommendation-form');
+            const majorInput = document.getElementById('major');
+            const budgetInput = document.getElementById('budget');
+            const budgetGroup = document.getElementById('budget-group');
+            const majorGroup = document.getElementById('major-group');
+            const submitBtn = document.getElementById('submit-btn');
+            const submitLabel = document.getElementById('submit-label');
+            const results = document.getElementById('results');
+            const emptyState = document.getElementById('empty-state');
+            const overviewContent = document.getElementById('overview-content');
+            const overviewCount = document.getElementById('overview-count');
+            const noticeArea = document.getElementById('notice-area');
+            const warningMessage = document.getElementById('warning-message');
+            const noticeTitle = document.getElementById('notice-title');
+            const techDetails = document.getElementById('tech-details');
+            const errorDetails = document.getElementById('error-details');
+            const sourceBadge = document.getElementById('source-badge');
+            const sourceBadgeLabel = document.getElementById('source-badge-label');
+            const copyBtn = document.getElementById('copy-btn');
+            const optionalToggle = document.getElementById('optional-toggle');
+            const optionalBody = document.getElementById('optional-body');
+            const chips = document.querySelectorAll('.chip');
+            const exampleBtn = document.getElementById('example-btn');
+            const brandSelect = document.getElementById('brand');
+            const osSelect = document.getElementById('os_name');
+            const gpuSelect = document.getElementById('gpu');
+            const includeUnavailable = document.getElementById('include_unavailable');
+            const lockHint = document.getElementById('lock-hint');
+            const lockHintText = document.getElementById('lock-hint-text');
+            const availabilityHint = document.getElementById('availability-hint');
+            const availabilityText = document.getElementById('availability-text');
+            const lastUpdatedBadge = document.getElementById('last-updated-badge');
+
+            let rawMarkdown = '';
+            let lastSummary = null;
+            let laptopCatalog = null;
+            const inr = new Intl.NumberFormat('en-IN');
+
+            /* ---------- Theme toggle (dark by default, persisted) ---------- */
+            const THEME_KEY = 'laptopwise-theme';
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeToggleLabel = document.getElementById('theme-toggle-label');
+
+            function applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                themeToggleLabel.textContent = theme === 'light' ? 'Light' : 'Dark';
+                try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* ignore */ }
+            }
+            function initTheme() {
+                let saved = 'dark';
+                try { saved = localStorage.getItem(THEME_KEY) || 'dark'; } catch (e) { /* ignore */ }
+                if (saved !== 'light') saved = 'dark';
+                applyTheme(saved);
+            }
+            themeToggle.addEventListener('click', function () {
+                const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+                applyTheme(current === 'light' ? 'dark' : 'light');
+            });
+
+            /* ---------- Provider toggle ---------- */
+            function toggleOpenRouterModel() {
+                const show = providerSelect.value === 'openrouter';
+                orModelGroup.style.display = show ? 'block' : 'none';
+                if (show && !orModelSelect.value) {
+                    orModelSelect.value = 'google/gemma-4-31b-it:free';
+                }
+            }
+            providerSelect.addEventListener('change', toggleOpenRouterModel);
+
+            /* ---------- Brand / OS coupling ----------
+               Apple only ships macOS and macOS only runs on Apple, so the two
+               fields auto-correct each other. Both stay editable so the user can
+               always change their mind. */
+            function syncBrandOS() {
+                const appleBrand = brandSelect.value === 'Apple';
+                const macOs = osSelect.value === 'MacOS';
+
+                if (appleBrand && !macOs) {
+                    osSelect.value = 'MacOS';
+                    lockHint.style.display = '';
+                    lockHintText.textContent = 'Apple laptops run macOS — matched automatically.';
+                } else if (macOs && !appleBrand) {
+                    brandSelect.value = 'Apple';
+                    lockHint.style.display = '';
+                    lockHintText.textContent = 'macOS only runs on Apple — matched automatically.';
+                } else {
+                    lockHint.style.display = 'none';
+                }
+                updateAvailability();
+            }
+            brandSelect.addEventListener('change', function () {
+                if (brandSelect.value !== 'Apple' && osSelect.value === 'MacOS') {
+                    osSelect.value = '';
+                }
+                syncBrandOS();
+            });
+            osSelect.addEventListener('change', function () {
+                if (osSelect.value !== 'MacOS' && brandSelect.value === 'Apple') {
+                    brandSelect.value = '';
+                }
+                syncBrandOS();
+            });
+
+            /* ---------- Optional section toggle ---------- */
+            optionalToggle.addEventListener('click', function () {
+                const open = optionalBody.classList.toggle('open');
+                optionalToggle.classList.toggle('open', open);
+                optionalToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+
+            /* ---------- Budget chips ---------- */
+            const budgetChips = document.querySelectorAll('#budget-chips .chip');
+            budgetChips.forEach(function (chip) {
+                chip.addEventListener('click', function () {
+                    budgetInput.value = chip.dataset.value;
+                    budgetChips.forEach(function (c) { c.classList.remove('active'); });
+                    chip.classList.add('active');
+                    clearInvalid(budgetGroup);
+                    updateAvailability();
+                });
+            });
+            budgetInput.addEventListener('input', function () {
+                budgetChips.forEach(function (c) {
+                    c.classList.toggle('active', c.dataset.value === budgetInput.value);
+                });
+                updateAvailability();
+            });
+            /* ---------- Domain quick chips (predefined + custom) ---------- */
+            const majorChips = document.querySelectorAll('#major-chips .chip');
+            majorChips.forEach(function (chip) {
+                chip.addEventListener('click', function () {
+                    majorInput.value = chip.dataset.value;
+                    majorChips.forEach(function (c) { c.classList.remove('active'); });
+                    chip.classList.add('active');
+                    clearInvalid(majorGroup);
+                    updateAvailability();
+                    majorInput.focus();
+                });
+            });
+            majorInput.addEventListener('input', function () {
+                const v = majorInput.value.trim().toLowerCase();
+                majorChips.forEach(function (c) {
+                    c.classList.toggle('active', c.dataset.value.toLowerCase() === v);
+                });
+            });
+            // datalist selection also replaces input fast
+            majorInput.addEventListener('change', function () {
+                majorInput.dispatchEvent(new Event('input'));
+            });
+
+            /* ---------- Form validation helpers ---------- */
+            function markInvalid(group) {
+                group.classList.add('invalid');
+            }
+            function clearInvalid(group) {
+                group.classList.remove('invalid');
+            }
+            function validate() {
+                let ok = true;
+                if (!majorInput.value.trim()) {
+                    markInvalid(majorGroup); ok = false;
+                } else {
+                    clearInvalid(majorGroup);
+                }
+                const budgetVal = parseFloat(budgetInput.value);
+                if (isNaN(budgetVal) || budgetVal < 10000) {
+                    markInvalid(budgetGroup); ok = false;
+                } else {
+                    clearInvalid(budgetGroup);
+                }
+                return ok;
+            }
+            [majorInput, budgetInput].forEach(function (el) {
+                el.addEventListener('input', function () {
+                    clearInvalid(el.id === 'major' ? majorGroup : budgetGroup);
+                });
+            });
+
+            /* ---------- Form submit ---------- */
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                if (!validate()) {
+                    results.innerHTML = '';
+                    return;
+                }
+
+                const requestPayload = {
+                    provider: providerSelect.value,
+                    major: majorInput.value.trim(),
+                    budget: parseFloat(budgetInput.value)
+                };
+                if (providerSelect.value === 'openrouter' && orModelSelect.value) {
+                    requestPayload.model = orModelSelect.value;
+                }
+                const ram = document.getElementById('ram').value.trim();
+                if (ram) requestPayload.ram = parseFloat(ram);
+                const brand = document.getElementById('brand').value.trim();
+                if (brand) requestPayload.brand = brand;
+                const os = document.getElementById('os_name').value.trim();
+                if (os) requestPayload.os_name = os;
+                const gpu = gpuSelect.value.trim();
+                if (gpu) requestPayload.gpu = gpu;
+                if (includeUnavailable.checked) requestPayload.include_unavailable = true;
+                const details = document.getElementById('details').value.trim();
+                if (details) requestPayload.details = details;
+
+                setLoading(true);
+                results.innerHTML = '';
+                emptyState.style.display = 'none';
+                hideNotice();
+                setSource('');
+                copyBtn.style.display = 'none';
+                rawMarkdown = '';
+                lastSummary = null;
+
+                renderLoading();
+                showOverviewLoading();
+
+                try {
+                    const response = await fetch('/api/recommend', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestPayload),
+                        cache: 'no-store'
+                    });
+
+                    if (!response.ok) {
+                        let detail = 'Request failed: ' + response.statusText;
+                        try {
+                            const errBody = await response.json();
+                            detail = errBody.detail || detail;
+                        } catch (e) { /* ignore parse errors */ }
+                        setSource('');
+                        showNotice('', '');
+                        renderError(detail);
+                        renderOverviewError();
+                        return;
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    gotResult = false;
+
+                    const processFrame = function (frame) {
+                        frame.split('\n').forEach(function (line) {
+                            if (line.indexOf('data:') !== 0) return;
+                            const payload = line.slice(5).trim();
+                            if (!payload) return;
+                            try {
+                                handleProgressEvent(JSON.parse(payload));
+                            } catch (e) {
+                                console.error('Bad SSE frame:', payload, e);
+                            }
+                        });
+                    };
+
+                    while (true) {
+                        const chunk = await reader.read();
+                        if (chunk.done) break;
+                        buffer += decoder.decode(chunk.value, { stream: true });
+                        let sep;
+                        while ((sep = buffer.indexOf('\n\n')) !== -1) {
+                            processFrame(buffer.slice(0, sep));
+                            buffer = buffer.slice(sep + 2);
+                        }
+                    }
+
+                    if (!gotResult) {
+                        setSource('');
+                        showNotice('', '');
+                        renderError('The server finished without returning a recommendation. Please try again.');
+                        renderOverviewError();
+                    }
+                } catch (err) {
+                    console.error('Error streaming recommendation:', err);
+                    setSource('');
+                    showNotice('', '');
+                    renderError('Could not reach the server. Please check that the backend is running and try again.');
+                    renderOverviewError();
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            function setLoading(loading) {
+                submitBtn.classList.toggle('loading', loading);
+                submitBtn.disabled = loading;
+                submitLabel.textContent = loading ? 'Generating…' : 'Get My Recommendation';
+                if (loading) {
+                    /* While the model is working, keep the UI focused on the
+                       main loading progress: collapse the "More options"
+                       section so its optional fields don't distract. */
+                    optionalBody.classList.remove('open');
+                    optionalToggle.classList.remove('open');
+                    optionalToggle.setAttribute('aria-expanded', 'false');
+                }
+            }
+
+            /* Notice sits BELOW the analysis so it never disrupts the report. */
+            function showNotice(msg, details, title) {
+                noticeTitle.textContent = (title && title.trim()) ? title.trim() : '';
+                if (msg && msg.trim()) {
+                    warningMessage.textContent = msg;
+                    noticeArea.style.display = '';
+                } else {
+                    noticeArea.style.display = 'none';
+                }
+                if (details && details.trim()) {
+                    errorDetails.textContent = details;
+                    techDetails.style.display = '';
+                } else {
+                    techDetails.style.display = 'none';
+                }
+            }
+
+            function hideNotice() {
+                noticeArea.style.display = 'none';
+                techDetails.style.display = 'none';
+            }
+
+            function setSource(status) {
+                if (status === 'fallback') {
+                    sourceBadge.className = 'source-badge local';
+                    sourceBadgeLabel.textContent = 'Local database';
+                    sourceBadge.style.display = 'inline-flex';
+                } else if (status === 'success') {
+                    sourceBadge.className = 'source-badge ai';
+                    sourceBadgeLabel.textContent = 'AI powered';
+                    sourceBadge.style.display = 'inline-flex';
+                } else {
+                    sourceBadge.style.display = 'none';
+                }
+            }
+
+            function renderError(msg) {
+                results.innerHTML = '';
+                const state = document.createElement('div');
+                state.className = 'state error';
+                state.innerHTML =
+                    '<svg class="state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>' +
+                    '<h3>Something went wrong</h3><p>' + escapeHtml(msg) + '</p>';
+                results.appendChild(state);
+            }
+
+            /* Animated loading view: bouncing dots + live step tracker +
+               shimmering skeleton that mirrors the shape of the final report. */
+            const PROGRESS_STEPS = [
+                'Analyzing your profile',
+                'Starting the AI recommendation agents',
+                'Searching the laptop catalog',
+                'Writing your personalized recommendation',
+                'Compiling your recommendation'
+            ];
+
+            function renderLoading() {
+                const skCard =
+                    '<div class="sk-card"><div class="sk sk-line w60"></div>' +
+                    '<div class="sk sk-line w90"></div>' +
+                    '<div class="sk sk-line w75"></div>' +
+                    '<div class="sk sk-line w40"></div></div>';
+                const skRow = '<div class="sk-row">' +
+                    '<div class="sk sk-cell"></div>'.repeat(6) + '</div>';
+                const state = document.createElement('div');
+                state.className = 'loading';
+                state.innerHTML =
+                    '<div class="loading-head">' +
+                    '<span class="loading-spinner"></span>' +
+                    '<span class="loading-title">Generating your recommendation</span>' +
+                    '<span class="loading-dots"><i></i><i></i><i></i></span>' +
+                    '</div>' +
+                    '<div class="progress-steps" id="progress-steps-results"></div>' +
+                    '<details class="loading-details" id="loading-details">' +
+                    '<summary>Show more details</summary>' +
+                    '<div class="loading-log" id="progress-log-results"></div>' +
+                    '</details>' +
+                    '<div class="loading-cards">' + skCard.repeat(3) + '</div>' +
+                    '<div class="sk-table">' + skRow + skRow + skRow + '</div>';
+                results.appendChild(state);
+                resetProgress('progress-steps-results');
+            }
+
+            /* Render the numbered step list in the given container, marking
+               completed steps, the active step, and pending steps. */
+            function renderSteps(stepsEl, index) {
+                if (!stepsEl) return;
+                stepsEl.innerHTML = PROGRESS_STEPS.map(function (label, i) {
+                    const cls = i < index ? 'done' : (i === index ? 'active' : '');
+                    const icon = i < index
+                        ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+                        : '<span class="step-dot"></span>';
+                    return '<div class="progress-step ' + cls + '">' +
+                        '<span class="step-icon">' + icon + '</span>' +
+                        '<span class="step-label">' + escapeHtml(label) + '</span>' +
+                        '</div>';
+                }).join('');
+            }
+
+            let progressIndex = 0;
+            let gotResult = false;
+            function resetProgress(stepsId) {
+                progressIndex = 0;
+                renderSteps(document.getElementById(stepsId), 0);
+            }
+
+            function updateProgress(detail, index) {
+                if (index >= 0) progressIndex = Math.max(progressIndex, index);
+                renderSteps(document.getElementById('progress-steps-results'), progressIndex);
+                renderSteps(document.getElementById('progress-steps-overview'), progressIndex);
+                appendProgressLog(detail);
+            }
+
+            /* Raw agent progress messages accumulate under the collapsible
+               "Show more details" toggle so the main loading view stays clean. */
+            function appendProgressLog(detail) {
+                if (!detail) return;
+                const log = document.getElementById('progress-log-results');
+                if (!log) return;
+                const line = document.createElement('div');
+                line.className = 'loading-log-line';
+                line.textContent = detail;
+                log.appendChild(line);
+                log.scrollTop = log.scrollHeight;
+            }
+
+            /* Route a parsed SSE event to the progress UI or final render. */
+            function handleProgressEvent(data) {
+                const type = data.type || '';
+                if (type === 'result') {
+                    updateProgress('Done', PROGRESS_STEPS.length);
+                    rawMarkdown = data.recommendation || '';
+                    setSource(data.status || '');
+                    if (data.status === 'fallback') {
+                        const titles = {
+                            missing_api_key: 'No API key found',
+                            local: 'Local catalog',
+                            ai_error: 'AI service unavailable',
+                            no_match: 'Widening the search'
+                        };
+                        showNotice(
+                            data.warning || '',
+                            data.details || '',
+                            titles[data.fallback_reason] || 'Using local database'
+                        );
+                    } else {
+                        showNotice(data.warning || '', data.details || '');
+                    }
+                    renderRecommendation(rawMarkdown);
+                    lastSummary = data.summary || null;
+                    renderOverview(lastSummary, rawMarkdown);
+                    gotResult = true;
+                    return;
+                }
+                const message = data.message || '';
+                if (type === 'task') {
+                    updateProgress(message, 3);
+                } else if (type === 'step') {
+                    updateProgress(message, 2);
+                } else if (type === 'status') {
+                    const low = message.toLowerCase();
+                    if (low.indexOf('analyzing') !== -1) {
+                        updateProgress(message, 1);
+                    } else if (low.indexOf('starting') !== -1 || low.indexOf('agents') !== -1) {
+                        updateProgress(message, 1);
+                    } else {
+                        updateProgress(message, progressIndex);
+                    }
+                }
+            }
+
+            /* ---------- Overview: picked laptops ---------- */
+            function fmtPrice(n) {
+                if (!n || isNaN(n)) return '';
+                return '₹' + inr.format(Math.round(n));
+            }
+
+            function specChips(p) {
+                const chips = [];
+                if (p.ram) chips.push(String(p.ram).replace(/\s*GB.*$/i, '') + ' GB RAM');
+                if (p.storage) chips.push(String(p.storage).replace(/\s*GB.*$/i, '') + ' GB SSD');
+                if (p.processor) chips.push(String(p.processor));
+                if (p.os) chips.push(String(p.os));
+                if (p.gpu && p.gpu !== 'Unknown' && p.gpu !== 'Integrated') chips.push(String(p.gpu));
+                else if (p.has_dedicated_gpu) chips.push('Dedicated GPU');
+                if (p.has_dedicated_gpu) chips.push('🎮 DGPU');
+                if (p.rating) chips.push('★ ' + p.rating);
+                if (p.is_available === false) chips.push('⚠️ Unavailable');
+                return chips;
+            }
+
+            /* Amazon lists each laptop colour as a separate SKU (distinct ASIN).
+               Mirror the Python ``base_model`` so the UI can group colour
+               variants of the same machine into one model. */
+            const COLOR_WORD_RE = /^(silver|space ?gray|space ?grey|gray|grey|black|blue|indigo|citrus|white|gold|rose|red|green|orange|purple|pink|teal|brown|beige|navy|midnight|starlight|graphite|titanium|natural|sky blue|sky|obsidian|mystic|moonlight|deep blue|pale gold)$/i;
+
+            function baseModel(title) {
+                const s = String(title || '').trim();
+                const m = s.match(/[;|,]\s*([^;|,]+)$/);
+                if (!m) return s;
+                const last = m[1].trim();
+                if (!last || last.length > 30) return s;
+                if (COLOR_WORD_RE.test(last)) {
+                    return s.slice(0, m.index).replace(/[;|,]\s*$/, '').trim();
+                }
+                return s;
+            }
+
+            /* Best-effort colour of a catalog row: prefer the Color column, fall
+               back to the trailing colour word in the title. */
+            function productColor(row) {
+                const c = String(row.Color || '').trim();
+                if (c && !/^(unknown|nan|none)$/i.test(c)) {
+                    return c.toLowerCase().replace(/(^|\s)\S/g, function (ch) {
+                        return ch.toUpperCase();
+                    });
+                }
+                const m = String(row.Title || '').match(/[;|,]\s*([^;|,]+)$/);
+                if (m && COLOR_WORD_RE.test(m[1].trim())) return m[1].trim();
+                return '';
+            }
+
+            /* Attach the list of colours each picked model ships in, using the
+               real catalog (summary picks already carry ``colors`` from the API;
+               AI-extracted picks get them resolved here). */
+            function attachVariantColors(picks) {
+                if (!laptopCatalog) return picks;
+                return picks.map(function (p) {
+                    const row = matchCatalogRow(p.title || '', p.price || 0);
+                    const base = row ? baseModel(row.Title || '') : baseModel(p.title || p.brand || '');
+                    if (!base) return p;
+                    if (!Array.isArray(p.colors) || !p.colors.length) p.colors = [];
+                    laptopCatalog.forEach(function (r) {
+                        if (!r.Title || baseModel(r.Title) !== base) return;
+                        const c = productColor(r);
+                        if (c && p.colors.indexOf(c) === -1) p.colors.push(c);
+                    });
+                    p._base = base;
+                    return p;
+                });
+            }
+
+            /* Drop colour-variant duplicates so the overview never shows the
+               same model twice (e.g. a MacBook in Silver and in Indigo). */
+            function dedupByModel(picks) {
+                const seen = new Set();
+                return picks.filter(function (p) {
+                    const b = p._base || baseModel(p.title || p.brand || '');
+                    if (!b) return true;
+                    if (seen.has(b)) return false;
+                    seen.add(b);
+                    return true;
+                });
+            }
+
+            function renderPickCards(picks) {
+                if (!picks || !picks.length) {
+                    return '<div class="overview-state"><h3>No picks to show</h3><p>Try adjusting your preferences.</p></div>';
+                }
+                // Available first if include_unavailable checked (backend already does, but ensure frontend)
+                picks = picks.slice().sort(function(a,b){ var avA=a.is_available!==false?1:0, avB=b.is_available!==false?1:0; return avB-avA; });
+                let html = '';
+                picks.forEach(function (p, i) {
+                    const top = i === 0 && p.is_available !== false;
+                    const unavailable = p.is_available === false;
+                    const chips = specChips(p).map(function (c) {
+                        var cls = c.indexOf('⚠️')!==-1 ? ' spec-chip warn' : (c.indexOf('🎮')!==-1 || c.indexOf('RTX')!==-1 ? ' spec-chip gpu-chip' : ' spec-chip');
+                        return '<span class="' + cls.trim() + '">' + escapeHtml(c) + '</span>';
+                    }).join('');
+                    const title = p.title || p.brand || 'Laptop';
+                    const variantColors = (p.colors || []).filter(function (c) {
+                        return typeof c === 'string' && c;
+                    });
+                    const colorsLine = variantColors.length > 1
+                        ? '<div class="pick-colors"><strong>Also in:</strong> ' +
+                          variantColors.map(function (c) { return escapeHtml(c); }).join(', ') +
+                          '</div>'
+                        : '';
+                    const gpuLine = p.gpu && p.gpu !== 'Unknown' ? '<div class="pick-colors"><strong>GPU:</strong> ' + escapeHtml(p.gpu) + (p.has_dedicated_gpu ? ' (Dedicated)' : ' (Integrated)') + '</div>' : '';
+                    const unavailBadge = unavailable ? '<span class="unavailable-tag">⛔ No longer available</span>' : '';
+                    const imgTagHtml = imgTag(p.image_path, p.image_url, 'pick-thumb', title);
+                    const titleEl = p.product_url
+                        ? '<a class="pick-title" href="' + escapeHtml(p.product_url) +
+                          '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(title) + '">' + escapeHtml(title) + '</a>'
+                        : '<div class="pick-title" title="' + escapeHtml(title) + '">' + escapeHtml(title) + '</div>';
+                    const link = p.product_url
+                        ? '<a class="pick-link" href="' + escapeHtml(p.product_url) +
+                          '" target="_blank" rel="noopener noreferrer">View on Amazon ↗</a>'
+                        : '';
+                    html +=
+                        '<div class="pick-card' + (top ? ' top' : '') + (unavailable ? ' unavailable' : '') + '">' +
+                        '<div class="pick-thumb-wrap">' + imgTagHtml + '</div>' +
+                        '<div class="pick-body">' +
+                        '<div class="pick-head">' +
+                        '<span class="pick-rank">' + (top ? 'Top pick' : 'Pick ' + (i + 1)) + '</span>' +
+                        '<span class="pick-price">' + fmtPrice(p.price) + '</span>' + unavailBadge +
+                        '</div>' +
+                        titleEl +
+                        '<div class="pick-brand">' + escapeHtml(p.brand || '') + '</div>' +
+                        (chips ? '<div class="pick-specs">' + chips + '</div>' : '') +
+                        gpuLine +
+                        colorsLine +
+                        (link ? '<div class="pick-actions">' + link + '</div>' : '') +
+                        '</div>' +
+                        '</div>';
+                });
+                return html;
+            }
+
+            function renderOverview(summary, md) {
+                let picks = null;
+                if (summary && Array.isArray(summary.picks) && summary.picks.length) {
+                    picks = summary.picks;
+                } else if (md) {
+                    picks = extractPicksFromRecommendation();
+                }
+
+                if (!picks) {
+                    overviewContent.innerHTML = '<div class="overview-state"><h3>AI report ready</h3><p>The full recommendation is below.</p></div>';
+                    overviewCount.style.display = 'none';
+                    return;
+                }
+
+                picks = enrichPicksWithCatalog(picks);
+                picks = attachVariantColors(picks);
+                picks = dedupByModel(picks);
+                overviewContent.innerHTML = renderPickCards(picks);
+                overviewCount.style.display = '';
+                overviewCount.textContent = picks.length + ' pick' + (picks.length > 1 ? 's' : '');
+
+                if (summary && summary.note) {
+                    const note = document.createElement('p');
+                    note.className = 'pick-note';
+                    note.textContent = summary.note;
+                    overviewContent.appendChild(note);
+                }
+            }
+
+            /* For AI (non-fallback) reports, fall back to reading the first
+               laptop comparison table (the report may contain earlier spec
+               tables, so scan until a table with a price/model column). If no
+               table matches, derive picks from the numbered pick headings
+               (#### 1. Title) matched against the real catalog. */
+            function extractPicksFromRecommendation() {
+                const tables = results.querySelectorAll('.recommendation .table-wrap table');
+                for (const table of tables) {
+                    const headers = Array.from(table.querySelectorAll('thead th')).map(function (th) {
+                        return th.textContent.trim().toLowerCase();
+                    });
+                    if (!headers.some(function (h) { return /price|cost/.test(h); })) continue;
+                    if (!headers.some(function (h) { return /model|laptop|brand|name/.test(h); })) continue;
+
+                    const idx = {
+                        brand: headers.findIndex(function (h) { return /model|laptop|brand|name|title/.test(h); }),
+                        price: headers.findIndex(function (h) { return /price|cost/.test(h); }),
+                        ram: headers.findIndex(function (h) { return /ram/.test(h); }),
+                        storage: headers.findIndex(function (h) { return /storage|ssd/.test(h); }),
+                        processor: headers.findIndex(function (h) { return /processor|cpu/.test(h); }),
+                        os: headers.findIndex(function (h) { return /os|operating/.test(h); }),
+                        rating: headers.findIndex(function (h) { return /rating|stars|score/.test(h); })
+                    };
+                    const picks = [];
+                    table.querySelectorAll('tbody tr').forEach(function (tr) {
+                        const cells = tr.querySelectorAll('td');
+                        const get = function (k) {
+                            const i = idx[k];
+                            return (i >= 0 && i < cells.length) ? cells[i].textContent.trim() : '';
+                        };
+                        const title = get('brand') || 'Laptop';
+                        const priceRaw = get('price');
+                        const price = parseInt(priceRaw.replace(/[^0-9]/g, ''), 10) || null;
+                        if (!title || title === 'Laptop') return;
+                        if (/not available|currently unavailable/i.test(title)) return;
+                        if (price === null && !/^\d/.test(title)) return;
+                        picks.push({
+                            title: title,
+                            brand: (title.match(/^([A-Za-z]+)/) || [])[1] || title,
+                            price: price,
+                            ram: get('ram'),
+                            storage: get('storage'),
+                            processor: get('processor'),
+                            os: get('os'),
+                            rating: get('rating')
+                        });
+                    });
+                    if (picks.length) return picks;
+                }
+
+                // Fall back to the pick-section headings (#### N. Title) matched
+                // against the catalog so picks still appear even without a table.
+                const headingPicks = [];
+                results.querySelectorAll('.recommendation h3, .recommendation h4').forEach(function (heading) {
+                    const text = heading.textContent.trim().replace(/^\d+[.)]\s*/, '');
+                    if (text.length < 5) return;
+                    const row = matchCatalogRow(text, null);
+                    if (!row) return;
+                    headingPicks.push({
+                        title: row.Title,
+                        brand: row.Brand,
+                        price: Number(row.Price) || null,
+                        ram: row.RAM,
+                        storage: row.SSD_Storage,
+                        processor: row.Processor,
+                        os: row.OS,
+                        rating: Number(row.Rating) || null,
+                        product_url: row.Product_URL || '',
+                        image_path: row.Image_Path || '',
+                        image_url: row.Image_URL || ''
+                    });
+                });
+                if (headingPicks.length) return headingPicks;
+                return null;
+            }
+
+            function showOverviewLoading() {
+                overviewContent.innerHTML =
+                    '<div class="progress-steps progress-steps-overview" id="progress-steps-overview"></div>';
+                overviewCount.style.display = 'none';
+                renderSteps(document.getElementById('progress-steps-overview'), 0);
+            }
+
+            function renderOverviewError() {
+                overviewContent.innerHTML =
+                    '<div class="overview-state"><h3>No picks to show</h3><p>Something went wrong while analyzing your profile.</p></div>';
+                overviewCount.style.display = 'none';
+            }
+
+            /* Proactive availability feedback using the real catalog. */
+            function updateAvailability() {
+                if (!laptopCatalog) return;
+                const brand = brandSelect.value;
+                const os = osSelect.value;
+                const budgetVal = parseFloat(budgetInput.value);
+
+                if (!brand && !os) {
+                    availabilityHint.style.display = 'none';
+                    return;
+                }
+
+                let pool = laptopCatalog;
+                if (brand) {
+                    pool = pool.filter(function (r) {
+                        return String(r.Brand).toLowerCase() === brand.toLowerCase();
+                    });
+                }
+                if (os) {
+                    pool = pool.filter(function (r) {
+                        return String(r.OS).toLowerCase() === os.toLowerCase();
+                    });
+                }
+
+                const fmt = function (n) { return '₹' + inr.format(Math.round(n)); };
+
+                if (!pool.length) {
+                    availabilityHint.className = 'availability warn';
+                    availabilityText.textContent = (brand && os)
+                        ? 'No ' + brand + ' laptops running ' + os + ' are in our catalog.'
+                        : 'No ' + (brand || os) + ' laptops are in our catalog.';
+                    availabilityHint.style.display = '';
+                    return;
+                }
+
+                const prices = pool.map(function (r) { return Number(r.Price); })
+                    .filter(function (p) { return p > 0; });
+                const min = Math.min.apply(null, prices);
+                let msg = pool.length + ' ' + (brand || 'matching') +
+                    ' model' + (pool.length > 1 ? 's' : '') +
+                    (brand ? ' from ' + brand : '') +
+                    (os ? ' running ' + os : '') + ', starting at ' + fmt(min) + '.';
+
+                if (!isNaN(budgetVal) && budgetVal > 0 && min > budgetVal) {
+                    availabilityHint.className = 'availability warn';
+                    msg += ' The cheapest sits above your ' + fmt(budgetVal) +
+                        ' budget — consider raising it or trying another brand.';
+                } else {
+                    availabilityHint.className = 'availability';
+                }
+                availabilityText.textContent = msg;
+                availabilityHint.style.display = '';
+            }
+
+            function loadCatalog() {
+                const inc = includeUnavailable && includeUnavailable.checked ? '?include_unavailable=true' : '';
+                fetch('/api/laptops' + inc)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (Array.isArray(data)) {
+                            laptopCatalog = data;
+                            updateAvailability();
+                            if (rawMarkdown) {
+                                enhanceRecommendationTables();
+                                renderOverview(lastSummary, rawMarkdown);
+                            }
+                        }
+                    })
+                    .catch(function () { /* catalog is best-effort */ });
+            }
+            if (includeUnavailable) includeUnavailable.addEventListener('change', loadCatalog);
+            if (gpuSelect) gpuSelect.addEventListener('change', updateAvailability);
+
+            /* ---------- Markdown rendering ---------- */
+            function escapeHtml(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            /* Build an <img> that prefers the local assets copy and falls back
+               to the remote Image_URL if the file is missing (e.g. the assets/
+               folder was not pushed to git). If every source fails it is swapped
+               for a small placeholder icon so we never show an empty gray box. */
+            function imgTag(path, url, cls, alt) {
+                const sources = [path, url].filter(function (s) {
+                    return s && String(s).trim();
+                }).map(function (s) { return String(s).trim(); });
+                if (!sources.length) return thumbPlaceholder(cls, alt);
+                const next = sources.slice(1);
+                const dataAttr = ' data-pick-fallback="' + escapeHtml(JSON.stringify(next)) + '"';
+                return '<img class="' + cls + '" src="' + escapeHtml(sources[0]) +
+                       '" alt="' + escapeHtml(alt || '') + '" loading="lazy"' + dataAttr + '>';
+            }
+
+            function thumbPlaceholder(cls, alt) {
+                return '<span class="thumb-ph" title="' + escapeHtml(alt || 'Laptop') + '" role="img" aria-label="' +
+                    escapeHtml(alt || 'Laptop image unavailable') + '">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="m4 16 4-4 3 3 3-3 4 4"/></svg>' +
+                    '</span>';
+            }
+
+            /* Delegated image-error handling: walk the data-pick-fallback chain
+               (local copy -> remote URL) and finally replace with a placeholder. */
+            document.addEventListener('error', function (event) {
+                const img = event.target;
+                if (!img || img.tagName !== 'IMG') return;
+                if (!img.getAttribute('data-pick-fallback')) return;
+                let next;
+                try { next = JSON.parse(img.getAttribute('data-pick-fallback')); } catch (e) { next = []; }
+                if (next.length) {
+                    img.setAttribute('data-pick-fallback', JSON.stringify(next.slice(1)));
+                    img.src = next[0];
+                } else {
+                    img.removeAttribute('data-pick-fallback');
+                    const ph = document.createElement('span');
+                    ph.className = 'thumb-ph';
+                    ph.setAttribute('role', 'img');
+                    ph.setAttribute('aria-label', img.getAttribute('alt') || 'Laptop image unavailable');
+                    ph.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="m4 16 4-4 3 3 3-3 4 4"/></svg>';
+                    img.replaceWith(ph);
+                }
+            }, true);
+
+            function inlineMarkdown(str) {
+                return str
+                    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+                    .replace(/`([^`]+)`/g, '<code>$1</code>');
+            }
+
+            function renderMarkdown(text) {
+                const lines = escapeHtml(text).split('\n');
+                const out = [];
+                let openUl = false;
+                let i = 0;
+
+                const closeUl = function () {
+                    if (openUl) { out.push('</ul>'); openUl = false; }
+                };
+
+                while (i < lines.length) {
+                    const trimmed = lines[i].trim();
+
+                    if (!trimmed) {
+                        closeUl();
+                        i++;
+                        continue;
+                    }
+
+                    if (trimmed === '---') {
+                        closeUl();
+                        out.push('<hr>');
+                        i++;
+                        continue;
+                    }
+
+                    const heading = trimmed.match(/^(#{1,6})\s+(.*)/);
+                    if (heading) {
+                        closeUl();
+                        out.push('<h' + heading[1].length + '>' + inlineMarkdown(heading[2]) + '</h' + heading[1].length + '>');
+                        i++;
+                        continue;
+                    }
+
+                    const listItem = trimmed.match(/^[-*+]\s+(.*)/);
+                    if (listItem) {
+                        if (!openUl) { out.push('<ul>'); openUl = true; }
+                        out.push('<li>' + inlineMarkdown(listItem[1]) + '</li>');
+                        i++;
+                        continue;
+                    }
+
+                    if (/^\|.*\|\s*$/.test(trimmed)) {
+                        closeUl();
+                        const rows = [];
+                        while (i < lines.length && /^\|.*\|\s*$/.test(lines[i].trim())) {
+                            rows.push(lines[i].trim().replace(/^\|/, '').replace(/\|\s*$/, '').split('|').map(function (c) { return c.trim(); }));
+                            i++;
+                        }
+                        const header = rows[0] || [];
+                        const body = rows.slice(2);
+                        let t = '<div class="table-wrap"><table>';
+                        t += '<thead><tr>' + header.map(function (c) { return '<th>' + inlineMarkdown(c) + '</th>'; }).join('') + '</tr></thead>';
+                        if (body.length) {
+                            t += '<tbody>' + body.map(function (r) {
+                                return '<tr>' + r.map(function (c) { return '<td>' + inlineMarkdown(c) + '</td>'; }).join('') + '</tr>';
+                            }).join('') + '</tbody>';
+                        }
+                        out.push(t + '</table></div>');
+                        continue;
+                    }
+
+                    closeUl();
+                    out.push('<p>' + inlineMarkdown(trimmed) + '</p>');
+                    i++;
+                }
+                closeUl();
+                return out.join('\n');
+            }
+
+            function renderRecommendation(md) {
+                results.innerHTML = '';
+                const div = document.createElement('div');
+                div.className = 'recommendation';
+                div.innerHTML = renderMarkdown(md);
+                results.appendChild(div);
+                enhanceRecommendationTables();
+                copyBtn.style.display = '';
+            }
+
+            /* Enrich the final "At a glance" comparison table with product
+               thumbnails and clickable titles, using the loaded catalog. */
+            const KNOWN_BRANDS = ['apple', 'hp', 'dell', 'lenovo', 'asus', 'acer', 'msi', 'samsung', 'xiaomi', 'razer', 'alienware', 'microsoft', 'primebook', 'thomson'];
+
+            /* Best-effort brand of a report title: match a known brand keyword
+               anywhere in the text, else fall back to the first word. */
+            function titleBrand(titleText) {
+                const t = String(titleText || '').toLowerCase();
+                for (const b of KNOWN_BRANDS) {
+                    if (new RegExp('(^|[^a-z0-9])' + b + '([^a-z0-9]|$)').test(t)) return b;
+                }
+                const m = t.match(/^([a-z]+)/);
+                return m ? m[1] : '';
+            }
+
+            /* Match a report title (and optional price) to a row in the loaded
+               catalog so we can attach images, product links and full specs. */
+            function matchCatalogRow(titleText, price) {
+                if (!laptopCatalog) return null;
+                const norm = function (s) {
+                    return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                };
+                const pickBest = function (cands) {
+                    const ranked = cands.filter(function (r) { return r; });
+                    if (!ranked.length) return null;
+                    return ranked.sort(function (a, b) {
+                        const aUrl = a.Product_URL ? 1 : 0;
+                        const bUrl = b.Product_URL ? 1 : 0;
+                        const aImg = (a.Image_Path || a.Image_URL) ? 1 : 0;
+                        const bImg = (b.Image_Path || b.Image_URL) ? 1 : 0;
+                        return (bUrl - aUrl) || (bImg - aImg);
+                    })[0];
+                };
+                const queryBrand = titleBrand(titleText);
+                const needle = norm(titleText);
+                if (!needle) return null;
+
+                // 1) Title match — exact/prefix overlap against the catalog.
+                const cands = [];
+                const brandCands = [];
+                for (const r of laptopCatalog) {
+                    const rt = norm(r.Title);
+                    if (!rt) continue;
+                    if (rt === needle || rt.indexOf(needle) === 0 || needle.indexOf(rt) === 0) {
+                        cands.push(r);
+                        if (queryBrand && String(r.Brand || '').toLowerCase() === queryBrand) {
+                            brandCands.push(r);
+                        }
+                    }
+                }
+                if (brandCands.length) return pickBest(brandCands);
+                if (cands.length) return pickBest(cands);
+
+                // 2) Price fallback — ONLY accept rows whose brand matches the
+                //    title brand, so "MSI Katana …" never enriches with an Apple
+                //    or HP image/link just because prices are similar.
+                if (price && queryBrand) {
+                    const priceCands = [];
+                    for (const r of laptopCatalog) {
+                        if (String(r.Brand || '').toLowerCase() !== queryBrand) continue;
+                        const rp = Number(r.Price) || 0;
+                        if (rp && Math.abs(rp - price) <= Math.max(300, rp * 0.06)) {
+                            priceCands.push(r);
+                        }
+                    }
+                    if (priceCands.length) return pickBest(priceCands);
+                }
+                return null;
+            }
+
+            /* Fill in any missing image/link/spec fields on overview picks using
+               the catalog, so the "Picked laptops" cards always match the
+               thumbnails shown inside the full report. */
+            function enrichPicksWithCatalog(picks) {
+                if (!Array.isArray(picks)) return picks;
+                return picks.map(function (p) {
+                    const row = matchCatalogRow(p.title || '', p.price || 0);
+                    if (!row) return p;
+                    return {
+                        title: p.title || row.Title,
+                        brand: p.brand || row.Brand,
+                        price: p.price || Number(row.Price) || null,
+                        ram: p.ram || row.RAM,
+                        storage: p.storage || row.SSD_Storage,
+                        processor: p.processor || row.Processor,
+                        os: p.os || row.OS,
+                        rating: p.rating || row.Rating,
+                        product_url: p.product_url || row.Product_URL || '',
+                        image_path: p.image_path || row.Image_Path || '',
+                        image_url: p.image_url || row.Image_URL || ''
+                    };
+                });
+            }
+
+            function enhanceRecommendationTables() {
+                if (!laptopCatalog) return;
+
+                results.querySelectorAll('.recommendation .table-wrap table').forEach(function (table) {
+                    const headers = Array.from(table.querySelectorAll('thead th')).map(function (th) {
+                        return th.textContent.trim().toLowerCase();
+                    });
+                    if (!headers.some(function (h) { return /price|cost/.test(h); })) return;
+                    const nameIdx = headers.findIndex(function (h) { return /model|laptop|brand|name|title/.test(h); });
+                    if (nameIdx < 0) return;
+                    const priceIdx = headers.findIndex(function (h) { return /price|cost/.test(h); });
+
+                    table.querySelectorAll('tbody tr').forEach(function (tr) {
+                        const cells = tr.querySelectorAll('td');
+                        if (!cells.length) return;
+                        const titleCell = cells[nameIdx];
+                        const priceCell = priceIdx >= 0 && priceIdx < cells.length ? cells[priceIdx] : null;
+                        const titleText = titleCell ? titleCell.textContent.trim() : '';
+                        const priceRaw = priceCell ? priceCell.textContent.trim() : '';
+                        const price = parseInt(priceRaw.replace(/[^0-9]/g, ''), 10) || null;
+
+                        const row = matchCatalogRow(titleText, price);
+                        if (row) {
+                            const thumb = imgTag(row.Image_Path, row.Image_URL, 'rec-thumb', titleText);
+                            if (thumb) {
+                                titleCell.className = 'rec-title-cell';
+                                if (row.Product_URL) {
+                                    titleCell.innerHTML =
+                                        thumb +
+                                        '<a class="rec-title-link" href="' + escapeHtml(row.Product_URL) +
+                                        '" target="_blank" rel="noopener noreferrer">' + (titleCell.innerHTML || titleText) + '</a>';
+                                } else {
+                                    titleCell.innerHTML = thumb + (titleCell.innerHTML || titleText);
+                                }
+                            } else if (row.Product_URL) {
+                                titleCell.innerHTML =
+                                    '<a class="rec-title-link" href="' + escapeHtml(row.Product_URL) +
+                                    '" target="_blank" rel="noopener noreferrer">' + (titleCell.innerHTML || titleText) + '</a>';
+                            }
+                        }
+                    });
+                });
+
+                /* Enrich pick section headings (#### 1. Title) with a thumbnail
+                   and a clickable link to the product page. */
+                results.querySelectorAll('.recommendation h4, .recommendation h3').forEach(function (heading) {
+                    const text = heading.textContent.trim().replace(/^\d+[.)]\s*/, '');
+                    if (text.length < 5) return;
+                    const row = matchCatalogRow(text, null);
+                    if (!row) return;
+                    const thumb = imgTag(row.Image_Path, row.Image_URL, 'rec-head-thumb', text);
+                    let inner = heading.innerHTML;
+                    if (row.Product_URL) {
+                        inner = '<a class="rec-title-link" href="' + escapeHtml(row.Product_URL) +
+                                '" target="_blank" rel="noopener noreferrer">' + inner + '</a>';
+                    }
+                    heading.className = 'rec-head';
+                    heading.innerHTML = thumb + inner;
+                });
+            }
+
+            /* ---------- Copy ---------- */
+            function copyText(text) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    return navigator.clipboard.writeText(text);
+                }
+                return new Promise(function (resolve, reject) {
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'fixed';
+                    ta.style.top = '0';
+                    ta.style.left = '0';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.focus();
+                    ta.select();
+                    try {
+                        var ok = document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        ok ? resolve() : reject(new Error('Copy command was rejected'));
+                    } catch (e) {
+                        document.body.removeChild(ta);
+                        reject(e);
+                    }
+                });
+            }
+
+            const copyIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+
+            copyBtn.addEventListener('click', function () {
+                if (!rawMarkdown) return;
+                copyText(rawMarkdown).then(function () {
+                    copyBtn.innerHTML = 'Copied!';
+                    copyBtn.classList.add('copied');
+                    copyBtn.classList.remove('failed');
+                    setTimeout(function () {
+                        copyBtn.innerHTML = copyIcon + 'Copy';
+                        copyBtn.classList.remove('copied');
+                    }, 1600);
+                }).catch(function () {
+                    copyBtn.innerHTML = 'Copy failed';
+                    copyBtn.classList.add('failed');
+                    copyBtn.classList.remove('copied');
+                    setTimeout(function () {
+                        copyBtn.innerHTML = copyIcon + 'Copy';
+                        copyBtn.classList.remove('failed');
+                    }, 2000);
+                });
+            });
+
+            /* ---------- Example profile ---------- */
+            exampleBtn.addEventListener('click', function () {
+                providerSelect.value = 'local';
+                orModelSelect.value = 'google/gemma-4-31b-it:free';
+                toggleOpenRouterModel();
+                majorInput.value = 'Computer Science';
+                budgetInput.value = '80000';
+                document.getElementById('details').value = 'Need to run IDEs and virtual machines, prefer a light laptop.';
+                document.getElementById('ram').value = '16';
+                document.getElementById('brand').value = '';
+                document.getElementById('os_name').value = '';
+                syncBrandOS();
+                updateAvailability();
+                chips.forEach(function (c) { c.classList.toggle('active', c.dataset.value === '80000'); });
+                clearInvalid(majorGroup);
+                clearInvalid(budgetGroup);
+                submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+
+            /* ---------- Dataset stats + last updated ---------- */
+            function setStat(index, label, value) {
+                const card = document.querySelectorAll('.stat-card')[index];
+                if (!card) return;
+                card.classList.remove('skeleton');
+                card.querySelector('.stat-label').textContent = label;
+                card.querySelector('.stat-value').textContent = value;
+            }
+            function formatLastUpdated(iso, short) {
+                if (!iso) return 'unknown';
+                try {
+                    const d = new Date(iso);
+                    if (short) return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' });
+                    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+                } catch(e) { return iso.slice(0,10); }
+            }
+            function loadStats() {
+                fetch('/api/stats')
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data && data.status === 'success') {
+                            const avail = data.available_count != null ? data.available_count : data.total_records;
+                            const total = data.total_records || 0;
+                            const suffix = data.available_count != null && data.available_count !== total ? ' ('+inr.format(avail)+' avail)' : '';
+                            setStat(0, 'Laptops', inr.format(total) + suffix);
+                            setStat(1, 'Avg. Price', '₹' + inr.format(Math.round(data.avg_price || 0)));
+                            setStat(2, 'Avg. Rating', (data.avg_rating || 0).toFixed(1) + ' / 5');
+                            setStat(3, 'GPUs', data.dedicated_gpu_count ? data.dedicated_gpu_count + ' dedicated' : inr.format(Object.keys(data.brands || {}).length) + ' brands');
+                            if (data.dedicated_gpu_count) {
+                                document.querySelectorAll('.stat-card')[3].title = Object.keys(data.gpu || {}).slice(0,5).join(', ');
+                            }
+                            const hint = document.getElementById('budget-hint');
+                            if (hint && data.max_price) {
+                                const maxL = (data.max_price/100000).toFixed(1);
+                                hint.textContent = 'Dataset top: ~₹' + maxL + 'L (' + inr.format(data.max_price) + ')';
+                            }
+                        }
+                    })
+                    .catch(function () { /* leave skeletons hidden on failure */ });
+                // Last updated badge (topbar right side) - minimal, not redundant
+                fetch('/api/metadata').then(function(r){return r.json()}).then(function(m){
+                    if (!m || !lastUpdatedBadge) return;
+                    const upd = m.last_updated_local || m.last_updated;
+                    const full = formatLastUpdated(upd);
+                    const short = formatLastUpdated(upd, true);
+                    // Desktop: "Updated 06 Sep 2026" ; Mobile short handled via CSS spans
+                    lastUpdatedBadge.querySelector('.updated-badge-full').textContent = 'Updated ' + full;
+                    lastUpdatedBadge.querySelector('.updated-badge-short').textContent = 'Updated ' + short;
+                    lastUpdatedBadge.title = 'Dataset: ' + (upd||'') + (m.total_records ? ' · ' + m.total_records + ' rows (' + (m.available_count||0) + ' avail)' : '');
+                }).catch(function(){
+                    if(lastUpdatedBadge){
+                        lastUpdatedBadge.querySelector('.updated-badge-full').textContent='Updated —';
+                        lastUpdatedBadge.querySelector('.updated-badge-short').textContent='Updated —';
+                    }
+                });
+            }
+
+            /* ---------- Init ---------- */
+            initTheme();
+            syncBrandOS();
+            updateAvailability();
+            toggleOpenRouterModel();
+            loadStats();
+            loadCatalog();
+
+            /* ---------- Image preview lightbox ---------- */
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const lightboxClose = document.getElementById('lightbox-close');
+
+            function openLightbox(src) {
+                if (!src) return;
+                lightboxImg.src = src;
+                lightboxImg.onerror = function () {
+                    lightboxImg.onerror = null;
+                    closeLightbox();
+                };
+                lightbox.classList.add('open');
+                lightbox.setAttribute('aria-hidden', 'false');
+            }
+
+            function closeLightbox() {
+                lightbox.classList.remove('open');
+                lightbox.setAttribute('aria-hidden', 'true');
+                lightboxImg.removeAttribute('src');
+            }
+
+            document.addEventListener('click', function (event) {
+                if (lightbox.classList.contains('open')) {
+                    if (event.target === lightbox || event.target === lightboxClose) {
+                        closeLightbox();
+                    }
+                    return;
+                }
+                const thumb = event.target.closest('.pick-thumb, .rec-thumb, .rec-head-thumb');
+                if (thumb && thumb.tagName === 'IMG' && thumb.src) {
+                    event.preventDefault();
+                    openLightbox(thumb.src);
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && lightbox.classList.contains('open')) {
+                    closeLightbox();
+                }
+            });
+        })();
+    </script>
+
+</body>
+
+</html>

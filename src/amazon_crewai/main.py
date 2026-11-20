@@ -1,15 +1,6 @@
-import sys
-from pathlib import Path
+from .app import app, main
 
-
-def main() -> None:
-    sys_info = system_info()
-    print(sys_info)
-
-
-def system_info() -> dict[str, str]:
-
-    return {"py_version": sys.version, "pwd": str(Path.cwd())}
+__all__ = ["app", "main"]
 
 
 if __name__ == "__main__":
