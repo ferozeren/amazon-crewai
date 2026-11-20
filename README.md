@@ -4,8 +4,6 @@ A full-stack app that recommends the **best laptop for a student or professional
 
 > **No API key? No problem.** Choose the **Local** provider (or let the keys be missing) and the app falls back to a grounded, deterministic recommendation built from the local dataset. It also falls back automatically if the AI errors out or concludes "no laptops found" — so the app is always usable.
 
-![FastAPI](https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png) · ![Pandas](https://pandas.pydata.org/static/img/pandas_mark.svg) · ![scikit-learn](https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png) · ![Python](https://www.python.org/static/community_logos/python-logo.png)
-
 ---
 
 ## ✨ What it does
