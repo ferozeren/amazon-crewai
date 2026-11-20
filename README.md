@@ -20,60 +20,6 @@ A full-stack app that recommends the **best laptop for a student or professional
 
 ## 🏗️ Architecture
 
-```mermaid
-flowchart TD
-    subgraph Frontend
-        UI[frontend/index.html<br/>single-file HTML/CSS/JS]
-    end
-
-    subgraph Backend "FastAPI — src/amazon_crewai/app.py"
-        API[POST /api/recommend<br/>SSE stream]
-        STATS[GET /api/stats]
-        META[GET /api/metadata]
-        LAP[GET /api/laptops]
-        CLEAN[POST /api/clean]
-        TRAIN[POST /api/train]
-        REFRESH[POST /api/refresh]
-    end
-
-    subgraph AI "CrewAI — src/amazon_crewai/crew.py"
-        CREW[create_laptop_crew]
-        AG1[Laptop Database<br/>Specialist]
-        AG2[Hardware<br/>Advisor]
-        TOOLS[tools.py<br/>stats + query tools]
-        LLM[(Gemini / OpenAI /<br/>OpenRouter / NVIDIA)]
-    end
-
-    subgraph Ranking
-        PRED[predict.py<br/>ML + heuristic blend]
-        MODEL[models/laptop_ranker.pkl]
-        TRAINER[train_model.py]
-    end
-
-    subgraph Data
-        DM[data_manager.py<br/>cleaning pipeline]
-        RAW[data/raw_data/<br/>amazon_laptops.csv]
-        CLEANED[data/processed_data/<br/>Clean Dataset.csv]
-        METAJSON[data/processed_data/metadata.json]
-        IMG[assets/laptops/<br/>product images]
-        SCRAPE[scrape_laptops.py<br/>Amazon India scraper]
-    end
-
-    UI --> API & STATS & META & LAP
-    SCRAPE --> RAW --> DM --> CLEANED
-    DM --> IMG
-    TRAINER --> MODEL
-    CLEANED --> TRAINER
-    CLEANED --> PRED
-    MODEL --> PRED
-    API --> CREW
-    CREW --> AG1 --> TOOLS --> CLEANED
-    TOOLS --> PRED
-    AG1 --> AG2
-    CREW --> LLM
-    CREW -- success / fallback --> UI
-```
-
 All the Python modules live under **`src/amazon_crewai/`** (a `src` layout); shared filesystem locations are resolved once in `paths.py`, so the app works no matter which directory you launch it from.
 
 ### The request flow (when you click **Get My Recommendation**)
