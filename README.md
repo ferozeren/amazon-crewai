@@ -2,6 +2,8 @@
 
 A full-stack app that recommends the **best laptop for a student or professional profile** (field of study, budget, RAM, brand, OS, GPU preference, availability) using **CrewAI multi-agent AI** over a **real scraped Amazon India catalog**, served by **FastAPI** with a single-file **dashboard** and an **ML ranker** that puts the best value picks on top.
 
+![Overview](images/amazon_crewai.gif)
+
 > **No API key? No problem.** Choose the **Local** provider (or let the keys be missing) and the app falls back to a grounded, deterministic recommendation built from the local dataset. It also falls back automatically if the AI errors out or concludes "no laptops found" — so the app is always usable.
 
 ---
